@@ -2,7 +2,10 @@ package com.example.android.serverconnection;
 
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -18,6 +21,7 @@ import android.view.MenuItem;
 import android.app.Fragment;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +40,9 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class Main extends AppCompatActivity
@@ -43,10 +50,12 @@ public class Main extends AppCompatActivity
 
     com.example.android.serverconnection.Fragments.send_and_get saf;
     Button b_con, b_send;
-
+    String message = "";
     Socket socket;
-    Runnable listen = new ClientListen();
-     TextView textView;
+    TextView textView;
+    ProgressBar pb;
+    Handler handler;
+    Thread cThread;
 
     volatile boolean connected = false, need_send = false;
 
@@ -78,6 +87,8 @@ public class Main extends AppCompatActivity
 
         saf = new send_and_get();
         b_con = (Button)findViewById(R.id.connect);
+        pb = (ProgressBar)findViewById(R.id.progressBar2);
+
         b_con.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -85,34 +96,15 @@ public class Main extends AppCompatActivity
                 EditText mess = (EditText) (findViewById(R.id.addr));
                 TextView res = (TextView) findViewById(R.id.result);
 
-
-               /* ClientConnection myClient = new ClientConnection("77.66.231.96", 28562, Main.this);
-                //ClientConnection myClient = new ClientConnection("192.168.1.236", 28563, socket);
-                Log.d("1", "4");
-                myClient.execute();
-
-
-                try {
-                    socket = myClient.get();
-                    Log.d("2222", myClient.get().isConnected() ? "yes" : "no");
-                    Log.d("4444", socket.isConnected() ? "yes" : "no");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                if (socket != null)
-                        was_connected(true);
-                    else
-                        was_connected(false);*/
-
                 if (!connected) {
-                   // serverIpAddress = serverIp.getText().toString();
-                   // if (!serverIpAddress.equals("")) {
-                        Thread cThread = new Thread(new ClientThread());
-                        textView.post(listen);
-                        cThread.start();
 
+                    if (cThread != null) {
+                        ExecutorService threadPoolExecutor = Executors.newSingleThreadExecutor();
+                        Future longRunningTaskFuture = threadPoolExecutor.submit(cThread);
+                        longRunningTaskFuture.cancel(true);
+                    }
+                        cThread = new Thread(new ClientThread());
+                        cThread.start();
                 }
 
                 }
@@ -122,69 +114,77 @@ public class Main extends AppCompatActivity
 
             @Override
             public void onClick(View arg0) {
-              /*  EditText mess = (EditText) (findViewById(R.id.addr));
-                TextView res = (TextView) findViewById(R.id.result);
 
-
-                ClientCommunication ClienMes = new ClientCommunication(socket);
-                //ClientConnection myClient = new ClientConnection("192.168.1.236", 28563, socket);
-                ClienMes.execute();
-                Log.d("1", "4");
-
-                try {
-                    String sf = ClienMes.get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                if (socket != null)
-                    was_connected(true);
-                else
-                    was_connected(false);*/
-              need_send = true;
+                if (connected)
+                    need_send = true;
             }
         });
+
+        handler = new Handler();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
     }
 
 
     public class ClientListen implements Runnable {
-
         @Override
         public void run() {
-            //TextView textView = (TextView)getWindow().getDecorView().getRootView().findViewById(R.id.result);
+            BufferedReader reader = null;
             try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 Log.d("ClientActivity", reader == null ? "e" : "w");
                 Log.d("ClientActivity", socket.getInputStream() == null ? "e" : "w");
-                String res = "";
 
-                String message = "";
+
                 int charsRead = 0;
                 char[] buffer = new char[1024];
 
                 while ((charsRead = reader.read(buffer)) != -1 && connected) {
-                    if (charsRead > 0)
+                    if (charsRead > 0) {
                         message += new String(buffer).substring(0, charsRead);
-                    if (message.contains("\r\n"))
-                    {
-                        textView.setText(res);
-                        res = "";
+                        Log.d("ClientActivity11", message);
+
+                    }
+                    if (message.contains("\r\n")) {
+                        Log.d("ClientActivity22", message);
+                        handler.post(new Runnable() {
+                            public void run() {
+                                textView.setText(message);
+                                message = "";
+                            }
+                        });
                     }
                 }
 
 
+            } catch (Exception e) {
+                Log.d("ClientActivity", "err");
+
+
+            } finally {
+
+                Log.d("ClientActivity", "FINALLY");
+                handler.post(new Runnable() {
+                    public void run() {
+                        View parentLayout = findViewById(R.id.content);
+                        Snackbar.make(parentLayout, "Connection lost", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                    }
+                });
+
+               // Snackbar.make(findViewById(android.R.id.content), "Lost connection with server", Snackbar.LENGTH_LONG).show();
+
+
                 connected = false;
-                reader.close();
-
-
+                if (reader != null)
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
             }
-            catch (Exception e) {
-                Log.d("ClientActivity", "Get exception");
-            }
+           
         }
 
 
@@ -192,8 +192,13 @@ public class Main extends AppCompatActivity
 
 
     public class ClientThread implements Runnable {
-
         public void run() {
+            handler.post(new Runnable() {
+                public void run() {
+                    pb.setVisibility(View.VISIBLE);
+
+                    }
+                });
             try {
                 InetAddress serverAddr = InetAddress.getByName(((EditText) findViewById(R.id.addr)).getText().toString());
                 Log.d("ClientActivity", "C: Connecting...");
@@ -201,15 +206,21 @@ public class Main extends AppCompatActivity
                 EditText editTextMessage = (EditText) findViewById(R.id.message);
 
                 connected = true;
-                Thread clientListen = new Thread(listen);
+
+                Thread clientListen = new Thread(new ClientListen());
+
                 clientListen.start();
-                //Snackbar.make( button, "Replace with your own action", Snackbar.LENGTH_LONG)
-                //               .setAction("Action", null).show();
+
 
 
                 PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket
                         .getOutputStream())), true);
                 Log.d("ClientActivity", "C: Connected");
+                handler.post(new Runnable() {
+                    public void run() {
+                        pb.setVisibility(View.GONE);
+                    }
+                });
                 while (connected) {
                     try {
                         if (need_send) {
@@ -227,11 +238,13 @@ public class Main extends AppCompatActivity
                     }
                 }
                 socket.close();
+                clientListen.interrupt();
                 Log.d("ClientActivity", "C: Closed.");
             } catch (Exception e) {
                 Log.e("ClientActivity", "C: Error", e);
                 connected = false;
             }
+            Thread.currentThread().interrupt();
         }
     }
 

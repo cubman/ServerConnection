@@ -15,17 +15,17 @@
     android:orientation="vertical">
 
 
-
-<LinearLayout
+    <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:id="@+id/connectionLayer">
 
+
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ddd"
+        android:text="192.168.1.212"
         android:textSize="16sp"
         android:id="@+id/addr"
         android:layout_weight="2"
@@ -34,7 +34,7 @@
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="28562"
+        android:text="28563"
         android:textSize="16sp"
         android:id="@+id/port"
         android:layout_weight="1"
@@ -50,6 +50,25 @@
         android:id="@+id/connect"
 
         android:layout_gravity="center" />
+
+
+    <ProgressBar
+        android:id="@+id/progressBar2"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id="@+id/content_communication">
+
 
 
     <EditText
@@ -73,6 +92,7 @@
         android:id="@+id/result"
         android:textSize="16pt"
         android:text="empty" />
-
+</LinearLayout>
+</ScrollView>
 
 </LinearLayout>
