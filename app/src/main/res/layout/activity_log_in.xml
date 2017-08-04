@@ -5,7 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    app:layout_collapseParallaxMultiplier="1.0">
+    app:layout_collapseParallaxMultiplier="1.0"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <android.support.v7.widget.ActionBarContainer
         android:layout_width="match_parent"
@@ -27,6 +29,55 @@
             tools:ignore="RtlCompat" />
 
     </android.support.v7.widget.ActionBarContainer>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/white">
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/connect_fb"
+            android:scaleType="fitCenter"
+            android:visibility="visible" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:textSize="18sp"
+                tools:text="ffdf"
+                android:textColor="#000"
+                />
+
+            <EditText
+                android:id="@+id/editText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPassword"
+                android:layout_margin="12dp"/>
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sign in"
+                android:background="@color/colorPrimaryDark"
+                android:id="@+id/SignInButtom"
+                />
+        </LinearLayout>
+
+    </LinearLayout>
 
 
 </LinearLayout>

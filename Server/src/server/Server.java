@@ -31,7 +31,7 @@ import java.sql.*;
 public class Server {
   int port, concurrentClientCount = 0;
   static Connection connection;
-
+  static Statement mySt;
   public Server(int port) {
     this.port = port;
     this.concurrentClientCount = 0;
@@ -68,18 +68,12 @@ public class Server {
 
 
   public static void main(String[] args) throws Exception {
-      try {
-      connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/connection", "admin", "123"); 
-      Statement mySt = connection.createStatement();
+    
+      connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/server", "root", null); 
+
       
-      ResultSet meRes = mySt.executeQuery("select * from users");
-      
-      while(meRes.next())
-          System.out.print(meRes.getString(1) + meRes.getString(2));
-      } catch(Exception e) {
-          e.printStackTrace();
-      }
-      //new Server(28563).run();
+     
+      new Server(28563).run();
       
   }
 
@@ -96,6 +90,8 @@ public class Server {
       try {
         String allQueriesInOneString = dataForProcessing + ((ByteBuf) msg).toString(CharsetUtil.UTF_8);
         String[] queries = allQueriesInOneString.split("\r\n");
+        for (int i =0; i < queries.length; ++i)
+         System.out.println(queries[i]);
         if (!allQueriesInOneString.substring(allQueriesInOneString.length()-2).equals("\r\n"))
         {//если последний запрос неполный - запоминаем его для дальнейшего рассмотрения
           dataForProcessing = queries[queries.length-1];
@@ -104,19 +100,20 @@ public class Server {
         else dataForProcessing = "";
         for (String query : queries)
         {
-          BufferedReader reader;
-          String answer = "";
-          try {
-          chooseAction(ctx, query);
+         
           
-          answer = "";
+          try {
+          QueryChooser.choose(ctx, connection, query);
+    
+          
+          //answer = "";
          
           }
           catch(Exception e) {
-              answer = "Unknown comand";
+             // answer = "Unknown comand";
           }
-          answer += "\r\n";
-          ctx.write(Unpooled.copiedBuffer(answer, CharsetUtil.UTF_8));
+          //answer += "\r\n";
+         // ctx.write(Unpooled.copiedBuffer(answer, CharsetUtil.UTF_8));
         }
         ctx.flush();
       } finally {
@@ -137,8 +134,6 @@ public class Server {
       System.out.print("client was disc " + concurrentClientCount + " lost");
     }
 
-        private void chooseAction(ChannelHandlerContext ctx, String query) {
-            return;
-        }
+       
   }
 }
